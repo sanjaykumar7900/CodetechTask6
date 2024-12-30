@@ -1,0 +1,99 @@
+-- Create a database
+CREATE DATABASE HotelBookingSystem;
+USE HotelBookingSystem;
+
+
+-- Create a table for rooms
+CREATE TABLE Rooms (
+    RoomID INT AUTO_INCREMENT PRIMARY KEY,
+    RoomNumber VARCHAR(10) NOT NULL,
+    RoomType VARCHAR(50) NOT NULL,
+    Capacity INT NOT NULL,
+    PricePerNight DECIMAL(8, 2) NOT NULL,
+    AvailabilityStatus BOOLEAN DEFAULT TRUE
+);
+
+-- Create a table for customers
+CREATE TABLE Customers (
+    CustomerID INT AUTO_INCREMENT PRIMARY KEY,
+    FirstName VARCHAR(100) NOT NULL,
+    LastName VARCHAR(100) NOT NULL,
+    Email VARCHAR(255) UNIQUE,
+    PhoneNumber VARCHAR(15),
+    Address TEXT
+);
+
+
+-- Create a table for reservations
+CREATE TABLE Reservations (
+    ReservationID INT AUTO_INCREMENT PRIMARY KEY,
+    CustomerID INT NOT NULL,
+    RoomID INT NOT NULL,
+    CheckInDate DATE NOT NULL,
+    CheckOutDate DATE NOT NULL,
+    TotalAmount DECIMAL(10, 2) NOT NULL,
+    ReservationStatus VARCHAR(50) DEFAULT 'Active',
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (RoomID) REFERENCES Rooms(RoomID)
+);
+
+
+-- Create a table for payments
+CREATE TABLE Payments (
+    PaymentID INT AUTO_INCREMENT PRIMARY KEY,
+    ReservationID INT NOT NULL,
+    PaymentDate DATETIME DEFAULT CURRENT_TIMESTAMP,
+    AmountPaid DECIMAL(10, 2) NOT NULL,
+    PaymentMethod VARCHAR(50),
+    FOREIGN KEY (ReservationID) REFERENCES Reservations(ReservationID)
+);
+
+-- Insert sample data into Rooms
+INSERT INTO Rooms (RoomNumber, RoomType, Capacity, PricePerNight, AvailabilityStatus) VALUES
+('101', 'Single', 1, 50.00, TRUE),
+('102', 'Double', 2, 75.00, TRUE),
+('103', 'Suite', 4, 120.00, TRUE);
+
+-- Insert sample data into Customers
+INSERT INTO Customers (FirstName, LastName, Email, PhoneNumber, Address) VALUES
+('Alice', 'Brown', 'alice.brown@example.com', '1234567890', '789 Maple Street'),
+('Bob', 'Johnson', 'bob.johnson@example.com', '0987654321', '321 Pine Street');
+
+-- Insert sample data into Reservations
+INSERT INTO Reservations (CustomerID, RoomID, CheckInDate, CheckOutDate, TotalAmount) VALUES
+(1, 1, '2024-12-25', '2024-12-30', 250.00),
+(2, 2, '2024-12-28', '2025-01-02', 375.00);
+
+-- Insert sample data into Payments
+INSERT INTO Payments (ReservationID, PaymentDate, AmountPaid, PaymentMethod) VALUES
+(1, NOW(), 250.00, 'Credit Card'),
+(2, NOW(), 375.00, 'Debit Card');
+
+
+-- Query to view all active reservations
+SELECT 
+    r.ReservationID,
+    c.FirstName,
+    c.LastName,
+    rm.RoomNumber,
+    rm.RoomType,
+    r.CheckInDate,
+    r.CheckOutDate,
+    r.TotalAmount
+FROM Reservations r
+JOIN Customers c ON r.CustomerID = c.CustomerID
+JOIN Rooms rm ON r.RoomID = rm.RoomID
+WHERE r.ReservationStatus = 'Active';
+
+-- Query to view payment history
+SELECT 
+    p.PaymentID,
+    r.ReservationID,
+    c.FirstName,
+    c.LastName,
+    p.PaymentDate,
+    p.AmountPaid,
+    p.PaymentMethod
+FROM Payments p
+JOIN Reservations r ON p.ReservationID = r.ReservationID
+JOIN Customers c ON r.CustomerID = c.CustomerID;
